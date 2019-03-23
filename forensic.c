@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
 
 typedef struct
 {
@@ -19,6 +20,131 @@ typedef struct
 } arg;
 
 arg args;
+
+void hashCalculator()
+{
+
+    char *filename = args.filename;
+
+    char tempFileName[100];
+
+    strcpy(tempFileName, filename);
+    strcat(tempFileName, "_info");
+
+
+    if (args.md5)
+    {
+
+        char command[100];
+        char sum[25];
+
+        sprintf(command, "md5sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 25, tempFile);
+
+        sum[24] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        printf(",%s", sum);
+    }
+    if (args.sha1)
+    {
+        char command[100];
+        char sum[33];
+
+        sprintf(command, "sha1sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 33, tempFile);
+        sum[32] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        printf(",%s", sum);
+    }
+
+    if (args.sha256)
+    {
+        char command[100];
+        char sum[65];
+
+        sprintf(command, "sha256sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 65, tempFile);
+
+        sum[64] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        printf(",%s", sum);
+    }
+
+    printf("\n");
+}
+
+void getFileInfo(){
+
+    char *filename = args.filename;
+    char tempFileName[100];
+    struct stat fileInfo;
+    char date[20];
+    char command[100];
+    char type[10];
+    strcpy(tempFileName, filename);
+    strcat(tempFileName, "_info");
+    args.md5 = true;
+    args.sha1 = true;
+    args.sha256 = true;
+    
+    if (stat(filename, &fileInfo) < 0)
+        printf("%s\n", strerror(errno));
+    else{
+
+        printf("%s,", filename);
+
+        //falta o type
+
+        printf("%ld,", fileInfo.st_size);
+
+        if(fileInfo.st_mode & S_IRUSR){
+            printf("r");
+        }
+        if(fileInfo.st_mode & S_IWUSR){
+            printf("w");
+        }
+        if(fileInfo.st_mode & S_IXUSR){
+            printf("x");
+        }
+
+        strftime(date, 20, "%G-%m-%dT%H:%M:%S", localtime(&(fileInfo.st_atime)));
+        printf(",%s",date);
+
+        strftime(date, 20, "%G-%m-%dT%H:%M:%S", localtime(&(fileInfo.st_mtime)));
+        printf(",%s",date);
+
+        hashCalculator();
+
+    }
+        
+}
 
 int analyseArgs(int argc, char *argv[])
 {
@@ -77,102 +203,10 @@ int analyseArgs(int argc, char *argv[])
         }
     }
 
-    //ver a função stat!
+    getFileInfo();
+
+    return 0;
 }
-
-void hashCalculator()
-{
-
-    char *filename = args.filename;
-
-    char tempFileName[100];
-
-    strcpy(tempFileName, filename);
-    strcat(tempFileName, "_info");
-
-    if (args.sha1)
-    {
-        char command[100];
-        char sum[33];
-
-        sprintf(command, "sha1sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 33, tempFile);
-        sum[32] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    if (args.sha256)
-    {
-        char command[100];
-        char sum[65];
-
-        sprintf(command, "sha256sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 65, tempFile);
-
-        sum[64] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    if (args.md5)
-    {
-
-        char command[100];
-        char sum[25];
-
-        sprintf(command, "md5sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 25, tempFile);
-
-        sum[24] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    printf("\n");
-}
-
-/*void option4(char* argv[]){
-    
-    DIR *directory = argv[3];
-    char name[200];
-    struct dirent *direntp; 
-
-    if ((directory = opendir( argv[1])) == NULL)
-    {
-        perror(argv[1]);
-        exit(2);
-    } 
-
-    closedir(directory); 
-}*/
 
 void options()
 {
@@ -195,7 +229,7 @@ void options()
     }
     else
     {
-        (printf("Please try again!\n"));
+        getFileInfo();
     }
 }
 
