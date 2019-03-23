@@ -21,85 +21,6 @@ typedef struct
 
 arg args;
 
-void hashCalculator()
-{
-
-    char *filename = args.filename;
-
-    char tempFileName[100];
-
-    strcpy(tempFileName, filename);
-    strcat(tempFileName, "_info");
-
-
-    if (args.md5)
-    {
-
-        char command[100];
-        char sum[25];
-
-        sprintf(command, "md5sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 25, tempFile);
-
-        sum[24] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-    if (args.sha1)
-    {
-        char command[100];
-        char sum[33];
-
-        sprintf(command, "sha1sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 33, tempFile);
-        sum[32] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    if (args.sha256)
-    {
-        char command[100];
-        char sum[65];
-
-        sprintf(command, "sha256sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 65, tempFile);
-
-        sum[64] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    printf("\n");
-}
-
 void getFileInfo(){
 
     char *filename = args.filename;
@@ -126,7 +47,7 @@ void getFileInfo(){
 
         FILE *tempFile = fopen(tempFileName, "r");
 
-        /*
+        
         size_t pos = ftell(tempFile);    
         fseek(tempFile, 0, SEEK_END);    
         size_t length = ftell(tempFile); 
@@ -137,14 +58,14 @@ void getFileInfo(){
         const char s[2] = ":";
         char *token;
 
-        //token = strtok(sum, s);
+        token = strtok(sum, s);
         token = strtok(NULL, s);
-        */
+        
         fclose(tempFile);
 
         unlink(tempFileName);
 
-        //printf(",%s", token);
+        printf(",%s", token);
 
         printf(",%ld,", fileInfo.st_size);
 
@@ -232,6 +153,85 @@ int analyseArgs(int argc, char *argv[])
     getFileInfo();
 
     return 0;
+}
+
+void hashCalculator()
+{
+
+    char *filename = args.filename;
+
+    char tempFileName[100];
+
+    strcpy(tempFileName, filename);
+    strcat(tempFileName, "_info");
+
+
+    if (args.md5)
+    {
+
+        char command[100];
+        char sum[25];
+
+        sprintf(command, "md5sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 25, tempFile);
+
+        sum[24] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        printf(",%s", sum);
+    }
+    if (args.sha1)
+    {
+        char command[100];
+        char sum[33];
+
+        sprintf(command, "sha1sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 33, tempFile);
+        sum[32] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        printf(",%s", sum);
+    }
+
+    if (args.sha256)
+    {
+        char command[100];
+        char sum[65];
+
+        sprintf(command, "sha256sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 65, tempFile);
+
+        sum[64] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        printf(",%s", sum);
+    }
+
+    printf("\n");
 }
 
 void options()
