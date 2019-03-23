@@ -110,19 +110,43 @@ void getFileInfo(){
     char type[10];
     strcpy(tempFileName, filename);
     strcat(tempFileName, "_info");
-    args.md5 = true;
-    args.sha1 = true;
-    args.sha256 = true;
     
     if (stat(filename, &fileInfo) < 0)
         printf("%s\n", strerror(errno));
     else{
 
-        printf("%s,", filename);
+        printf("%s", filename);
+        
+        char command[100];
+        char sum[100]; 
 
-        //falta o type
+        sprintf(command, "file %s >> %s", filename, tempFileName);
 
-        printf("%ld,", fileInfo.st_size);
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        /*
+        size_t pos = ftell(tempFile);    
+        fseek(tempFile, 0, SEEK_END);    
+        size_t length = ftell(tempFile); 
+        fseek(tempFile, pos, SEEK_SET); 
+
+        fgets(sum, length, tempFile);
+
+        const char s[2] = ":";
+        char *token;
+
+        //token = strtok(sum, s);
+        token = strtok(NULL, s);
+        */
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        //printf(",%s", token);
+
+        printf(",%ld,", fileInfo.st_size);
 
         if(fileInfo.st_mode & S_IRUSR){
             printf("r");
@@ -140,8 +164,10 @@ void getFileInfo(){
         strftime(date, 20, "%G-%m-%dT%H:%M:%S", localtime(&(fileInfo.st_mtime)));
         printf(",%s",date);
 
-        hashCalculator();
+    }
 
+    if(!args.h){
+        printf("\n");
     }
         
 }
