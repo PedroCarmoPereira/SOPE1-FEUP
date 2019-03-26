@@ -19,9 +19,7 @@ typedef struct
     char *outputfilename;
 } arg;
 
-arg args;
-
-void hashCalculator()
+void hashCalculator(arg args)
 {
 
     char *filename = args.filename;
@@ -104,7 +102,7 @@ void hashCalculator()
 
 }
 
-void getFileInfo(){
+void getFileInfo(arg args){
 
     char *filename = args.filename;
     char tempFileName[100];
@@ -183,9 +181,10 @@ void getFileInfo(){
         
 }
 
-int analyseArgs(int argc, char *argv[])
+arg analyseArgs(int argc, char *argv[])
 {
 
+    arg args;
     args.r = false;
     args.h = false;
     args.o = false;
@@ -193,9 +192,9 @@ int analyseArgs(int argc, char *argv[])
     args.filename = argv[argc - 1];
 
     if(argc < 3){
-        return 1;
+    
+        return args;
     }
-
     
 
     for (int i = 0; i < argc; i++)
@@ -204,7 +203,7 @@ int analyseArgs(int argc, char *argv[])
         if (strcmp(argv[i], "-h") == 0)
         {
             if(argc < 4){
-                return 1;
+                return args;
             }
             
             args.h = true;
@@ -242,16 +241,16 @@ int analyseArgs(int argc, char *argv[])
         }
     }
 
-    return 0;
+    return args;
 }
 
 
-void options()
+void options(arg args)
 {
 
     if (args.h == true)
     {
-        hashCalculator();
+        hashCalculator(args);
     }
     if (args.r == true)
     {
@@ -274,8 +273,24 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    analyseArgs(argc, argv);
-    getFileInfo();
-    options();
+    arg args = analyseArgs(argc, argv);
+
+    struct stat fileInfo;
+    if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode)){
+        DIR * dp = opendir(args.filename);
+        struct dirent *direntity;
+        arg argcpy = args;
+        while((direntity = readdir(dp)) != NULL){
+            
+           strcat(argcpy.filename, "/");
+           strcat(argcpy.filename,direntity->d_name);
+           getFileInfo(argcpy);
+           options(argcpy);
+           argcpy = args;
+        }
+    }
+
+    getFileInfo(args);
+    options(args);
     
 }

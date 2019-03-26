@@ -1,1 +1,0 @@
-forensic.o: forensic.c
