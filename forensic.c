@@ -99,6 +99,7 @@ void hashCalculator(arg args)
     }
 
     fprintf(out,"\n");
+    if(args.o) fclose(out);
 
 }
 
@@ -269,7 +270,7 @@ int main(int argc, char *argv[])
 
     if (argc < 2)
     {
-        printf("USE THIS PLEASE: ./forensic  [-r] [-h [md5[,sha1[,sha256]]] [-o <outfile>] [-v] <file|dir> \n");
+        printf("forensic: forensic  [-r] [-h [md5[,sha1[,sha256]]] [-o <outfile>] [-v] <file|dir> \n");
         return 1;
     }
 
@@ -279,18 +280,25 @@ int main(int argc, char *argv[])
     if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode)){
         DIR * dp = opendir(args.filename);
         struct dirent *direntity;
-        arg argcpy = args;
+        pid_t pid;
         while((direntity = readdir(dp)) != NULL){
-            
-           strcat(argcpy.filename, "/");
-           strcat(argcpy.filename,direntity->d_name);
-           getFileInfo(argcpy);
-           options(argcpy);
-           argcpy = args;
+            if (strcmp(direntity->d_name, ".") != 0 && strcmp(direntity->d_name, "..") != 0){
+                if ((pid = fork()) < 0) fprintf(stderr, "Fork Error\n");
+                if (pid == 0){
+                    chdir(args.filename);
+                    args.filename = direntity->d_name;
+                    getFileInfo(args);
+                    options(args);
+                    return 0;
+                }
+
+                else wait(NULL);
+            }
         }
     }
+    else {
+        getFileInfo(args);
+        options(args);
+    }
 
-    getFileInfo(args);
-    options(args);
-    
 }
