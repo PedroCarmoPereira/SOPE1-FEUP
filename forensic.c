@@ -27,8 +27,6 @@ void getFileInfo(){
     char tempFileName[100];
     struct stat fileInfo;
     char date[20];
-    char command[100];
-    char type[10];
     strcpy(tempFileName, filename);
     strcat(tempFileName, "_info");
     
@@ -128,6 +126,8 @@ int analyseArgs(int argc, char *argv[])
             {
                 args.md5 = true;
             }
+
+            
             break;
         }
 
@@ -145,6 +145,7 @@ int analyseArgs(int argc, char *argv[])
 
         if (strcmp(argv[i], "-o") == 0)
         {
+            args.outputfilename = argv[4];
             args.o = true;
             break;
         }
@@ -155,6 +156,7 @@ int analyseArgs(int argc, char *argv[])
     return 0;
 }
 
+
 void hashCalculator()
 {
 
@@ -164,7 +166,6 @@ void hashCalculator()
 
     strcpy(tempFileName, filename);
     strcat(tempFileName, "_info");
-
 
     if (args.md5)
     {
@@ -232,7 +233,9 @@ void hashCalculator()
     }
 
     printf("\n");
+
 }
+
 
 void options()
 {
@@ -241,25 +244,25 @@ void options()
     {
         hashCalculator();
     }
-    else if (args.r == true)
+    if (args.r == true)
     {
         printf("opt2\n");
     }
-    else if (args.v == true)
+    if (args.v == true)
     {
         printf("opt3\n");
     }
-    else if (args.o == true)
+    if (args.o == true)
     {
-        printf("opt4\n");
+       printf("opt4\n");
     }
-    else
-    {
+    
+    if( (args.h == false) && (args.r == false) && (args.v == false) && (args.o == false)){
         getFileInfo();
     }
 }
 
-int main(int argc, char *argv[], char *envp[])
+int main(int argc, char *argv[])
 {
 
     if (argc < 2)
@@ -270,4 +273,5 @@ int main(int argc, char *argv[], char *envp[])
 
     analyseArgs(argc, argv);
     options();
+    
 }
