@@ -21,6 +21,89 @@ typedef struct
 
 arg args;
 
+void hashCalculator()
+{
+
+    char *filename = args.filename;
+
+    char tempFileName[100];
+
+    FILE * out;
+    if (args.o) out = fopen(args.outputfilename, "a");
+    else out = stdout;
+
+    strcpy(tempFileName, filename);
+    strcat(tempFileName, "_info");
+
+    if (args.md5)
+    {
+
+        char command[100];
+        char sum[25];
+
+        sprintf(command, "md5sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 25, tempFile);
+
+        sum[24] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        fprintf(out, ",%s", sum);
+    }
+    if (args.sha1)
+    {
+        char command[100];
+        char sum[33];
+
+        sprintf(command, "sha1sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 33, tempFile);
+        sum[32] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        fprintf(out,",%s", sum);
+    }
+
+    if (args.sha256)
+    {
+        char command[100];
+        char sum[65];
+
+        sprintf(command, "sha256sum %s >> %s", filename, tempFileName);
+
+        system(command);
+
+        FILE *tempFile = fopen(tempFileName, "r");
+
+        fgets(sum, 65, tempFile);
+
+        sum[64] = '\0';
+
+        fclose(tempFile);
+
+        unlink(tempFileName);
+
+        fprintf(out,",%s", sum);
+    }
+
+    fprintf(out,"\n");
+
+}
+
 void getFileInfo(){
 
     char *filename = args.filename;
@@ -29,12 +112,16 @@ void getFileInfo(){
     char date[20];
     strcpy(tempFileName, filename);
     strcat(tempFileName, "_info");
+
+    FILE * out;
+    if (args.o) out = fopen(args.outputfilename, "w");
+    else out = stdout;
     
     if (stat(filename, &fileInfo) < 0)
         printf("%s\n", strerror(errno));
     else{
 
-        printf("%s", filename);
+        fprintf(out, "%s", filename);
         
         char command[100];
         char sum[100]; 
@@ -63,30 +150,35 @@ void getFileInfo(){
 
         unlink(tempFileName);
 
-        printf(",%s", token);
+        fprintf(out, ",%s", token);
 
-        printf(",%ld,", fileInfo.st_size);
+        fprintf(out, ",%ld,", fileInfo.st_size);
 
         if(fileInfo.st_mode & S_IRUSR){
-            printf("r");
+            fprintf(out, "r");
         }
         if(fileInfo.st_mode & S_IWUSR){
-            printf("w");
+            fprintf(out, "w");
         }
         if(fileInfo.st_mode & S_IXUSR){
-            printf("x");
+            fprintf(out, "x");
         }
 
         strftime(date, 20, "%G-%m-%dT%H:%M:%S", localtime(&(fileInfo.st_atime)));
-        printf(",%s",date);
+        fprintf(out, ",%s",date);
 
         strftime(date, 20, "%G-%m-%dT%H:%M:%S", localtime(&(fileInfo.st_mtime)));
-        printf(",%s",date);
+        fprintf(out, ",%s",date);
 
     }
 
     if(!args.h){
-        printf("\n");
+        fprintf(out,"\n");
+    }
+
+    if(args.o){
+        printf("Data saved on file %s\n", args.outputfilename);
+        fclose(out);
     }
         
 }
@@ -103,6 +195,8 @@ int analyseArgs(int argc, char *argv[])
     if(argc < 3){
         return 1;
     }
+
+    
 
     for (int i = 0; i < argc; i++)
     {
@@ -125,115 +219,30 @@ int analyseArgs(int argc, char *argv[])
             if (strstr(argv[i + 1], "md5") != NULL)
             {
                 args.md5 = true;
-            }
-
+            }       
             
-            break;
         }
 
         if (strcmp(argv[i], "-r") == 0)
         {
             args.r = true;
-            break;
+           
         }
 
         if (strcmp(argv[i], "-v") == 0)
         {
             args.v = true;
-            break;
         }
 
         if (strcmp(argv[i], "-o") == 0)
         {
-            args.outputfilename = argv[4];
+            if(argv[i+1] == args.filename) args.outputfilename = "forensicOut.txt";
+            else args.outputfilename = argv[i+1];
             args.o = true;
-            break;
         }
     }
 
-    getFileInfo();
-
     return 0;
-}
-
-
-void hashCalculator()
-{
-
-    char *filename = args.filename;
-
-    char tempFileName[100];
-
-    strcpy(tempFileName, filename);
-    strcat(tempFileName, "_info");
-
-    if (args.md5)
-    {
-
-        char command[100];
-        char sum[25];
-
-        sprintf(command, "md5sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 25, tempFile);
-
-        sum[24] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-    if (args.sha1)
-    {
-        char command[100];
-        char sum[33];
-
-        sprintf(command, "sha1sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 33, tempFile);
-        sum[32] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    if (args.sha256)
-    {
-        char command[100];
-        char sum[65];
-
-        sprintf(command, "sha256sum %s >> %s", filename, tempFileName);
-
-        system(command);
-
-        FILE *tempFile = fopen(tempFileName, "r");
-
-        fgets(sum, 65, tempFile);
-
-        sum[64] = '\0';
-
-        fclose(tempFile);
-
-        unlink(tempFileName);
-
-        printf(",%s", sum);
-    }
-
-    printf("\n");
-
 }
 
 
@@ -252,14 +261,8 @@ void options()
     {
         printf("opt3\n");
     }
-    if (args.o == true)
-    {
-       printf("opt4\n");
-    }
-    
-    if( (args.h == false) && (args.r == false) && (args.v == false) && (args.o == false)){
-        getFileInfo();
-    }
+
+    return;
 }
 
 int main(int argc, char *argv[])
@@ -272,6 +275,7 @@ int main(int argc, char *argv[])
     }
 
     analyseArgs(argc, argv);
+    getFileInfo();
     options();
     
 }
