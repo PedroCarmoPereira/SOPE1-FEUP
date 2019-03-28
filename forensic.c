@@ -171,7 +171,7 @@ void getFileInfo(arg args){
 
     }
 
-    if(!args.h){
+    if(!args.h || (stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode))){
         fprintf(out,"\n");
     }
 
@@ -249,6 +249,10 @@ arg analyseArgs(int argc, char *argv[])
 void options(arg args)
 {
 
+    struct stat fileInfo;
+    if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode)){
+        return;
+    }
     if (args.h == true)
     {
         hashCalculator(args);
