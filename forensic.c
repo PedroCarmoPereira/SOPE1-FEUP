@@ -105,6 +105,8 @@ void hashCalculator(arg args)
 
 void getFileInfo(arg args){
 
+    
+ 
     char *filename = args.filename;
     char tempFileName[100];
     struct stat fileInfo;
@@ -113,11 +115,16 @@ void getFileInfo(arg args){
     strcat(tempFileName, "_info");
 
     FILE * out;
-    if (args.o) out = fopen(args.outputfilename, "w");
+    if (args.o) out = fopen(args.outputfilename, "a");
     else out = stdout;
-    
-    if (stat(filename, &fileInfo) < 0)
+    int a = stat(filename, &fileInfo);
+    if ( a < 0)
         printf("%s\n", strerror(errno));
+    
+    else if (a == 0 && S_ISDIR(fileInfo.st_mode)){
+        printf("%s is a directory;", args.filename);
+
+    } 
     else{
 
         fprintf(out, "%s", filename);
@@ -236,9 +243,14 @@ arg analyseArgs(int argc, char *argv[])
 
         if (strcmp(argv[i], "-o") == 0)
         {
-            if(argv[i+1] == args.filename) args.outputfilename = "forensicOut.txt";
-            else args.outputfilename = argv[i+1];
+            args.outputfilename = getenv("PWD");
+            if(argv[i+1] == args.filename) strcat(args.outputfilename , "/forensicOut.txt");
+            else {
+                strcat(args.outputfilename, "/");
+                strcat(args.outputfilename,  argv[i+1]);
+            }
             args.o = true;
+            unlink(args.outputfilename);
         }
     }
 
