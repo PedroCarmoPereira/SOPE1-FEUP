@@ -121,8 +121,8 @@ void getFileInfo(arg args){
     if ( a < 0)
         printf("%s\n", strerror(errno));
     
-    else if (a == 0 && S_ISDIR(fileInfo.st_mode)){
-        printf("%s is a directory;", args.filename);
+    else if (a == 0 && S_ISDIR(fileInfo.st_mode) && !args.r){
+        fprintf(out, "%s is a directory;", args.filename);
 
     } 
     else{
@@ -281,7 +281,55 @@ void options(arg args)
     return;
 }
 
-int main(int argc, char *argv[])
+void analyseDirNR(arg args){
+    DIR * dp = opendir(args.filename);
+    struct dirent *direntity;
+    pid_t pid;
+    while((direntity = readdir(dp)) != NULL){
+        if (strcmp(direntity->d_name, ".") != 0 && strcmp(direntity->d_name, "..") != 0){
+            if ((pid = fork()) < 0) fprintf(stderr, "Fork Error\n");
+            if (pid == 0){
+                chdir(args.filename);
+                args.filename = direntity->d_name;
+                getFileInfo(args);
+                options(args);
+                return;
+            }
+
+            else wait(NULL);
+        }
+    }
+}
+
+void analyseDirR(int argc, char *argv[], char *envp[]){
+    
+    arg args = analyseArgs(argc, argv);
+    DIR * dp = opendir(args.filename);
+    struct dirent *direntity;
+    pid_t pid;
+    while((direntity = readdir(dp)) != NULL){
+        if (strcmp(direntity->d_name, ".") != 0 && strcmp(direntity->d_name, "..") != 0){
+            if ((pid = fork()) < 0) fprintf(stderr, "Fork Error\n");
+            if (pid == 0){
+                chdir(args.filename);
+                args.filename = direntity->d_name;
+                struct stat fileInfo;
+                if (stat(args.filename, &fileInfo) == 0 && !S_ISDIR(fileInfo.st_mode)){
+                    getFileInfo(args);
+                    options(args);
+                }
+                else{
+                    puts("AAA");
+                     execve(argv[0], argv, envp);
+                }
+            }
+
+            else wait(NULL);
+        }
+    }
+}
+
+int main(int argc, char *argv[], char *envp[])
 {
 
     if (argc < 2)
@@ -293,25 +341,10 @@ int main(int argc, char *argv[])
     arg args = analyseArgs(argc, argv);
 
     struct stat fileInfo;
-    if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode)){
-        DIR * dp = opendir(args.filename);
-        struct dirent *direntity;
-        pid_t pid;
-        while((direntity = readdir(dp)) != NULL){
-            if (strcmp(direntity->d_name, ".") != 0 && strcmp(direntity->d_name, "..") != 0){
-                if ((pid = fork()) < 0) fprintf(stderr, "Fork Error\n");
-                if (pid == 0){
-                    chdir(args.filename);
-                    args.filename = direntity->d_name;
-                    getFileInfo(args);
-                    options(args);
-                    return 0;
-                }
+    if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode)) analyseDirNR(args);
 
-                else wait(NULL);
-            }
-        }
-    }
+    else if (args.r) analyseDirR(argc, argv, envp);
+    
     else {
         getFileInfo(args);
         options(args);
