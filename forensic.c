@@ -121,8 +121,9 @@ void getFileInfo(arg args){
     if ( a < 0)
         printf("%s\n", strerror(errno));
     
-    else if (a == 0 && S_ISDIR(fileInfo.st_mode) && !args.r){
+    else if (a == 0 && S_ISDIR(fileInfo.st_mode)){
         fprintf(out, "%s is a directory;", args.filename);
+        //if(args.r) analyseDirR(argc)
 
     } 
     else{
@@ -269,10 +270,6 @@ void options(arg args)
     {
         hashCalculator(args);
     }
-    if (args.r == true)
-    {
-        printf("opt2\n");
-    }
     if (args.v == true)
     {
         printf("opt3\n");
@@ -289,8 +286,8 @@ void analyseDirNR(arg args){
         if (strcmp(direntity->d_name, ".") != 0 && strcmp(direntity->d_name, "..") != 0){
             if ((pid = fork()) < 0) fprintf(stderr, "Fork Error\n");
             if (pid == 0){
-                chdir(args.filename);
-                args.filename = direntity->d_name;
+                strcat(args.filename, "/");
+                strcat(args.filename, direntity->d_name);
                 getFileInfo(args);
                 options(args);
                 return;
@@ -299,6 +296,8 @@ void analyseDirNR(arg args){
             else wait(NULL);
         }
     }
+
+    closedir(dp);
 }
 
 void analyseDirR(int argc, char *argv[], char *envp[]){
@@ -311,22 +310,21 @@ void analyseDirR(int argc, char *argv[], char *envp[]){
         if (strcmp(direntity->d_name, ".") != 0 && strcmp(direntity->d_name, "..") != 0){
             if ((pid = fork()) < 0) fprintf(stderr, "Fork Error\n");
             if (pid == 0){
-                chdir(args.filename);
-                args.filename = direntity->d_name;
+                strcat(args.filename, "/");
+                strcat(args.filename, direntity->d_name);
                 struct stat fileInfo;
                 if (stat(args.filename, &fileInfo) == 0 && !S_ISDIR(fileInfo.st_mode)){
                     getFileInfo(args);
                     options(args);
                 }
-                else{
-                    puts("AAA");
-                     execve(argv[0], argv, envp);
-                }
+                else execve(argv[0], argv, envp);
             }
 
             else wait(NULL);
         }
     }
+
+    closedir(dp);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -341,7 +339,7 @@ int main(int argc, char *argv[], char *envp[])
     arg args = analyseArgs(argc, argv);
 
     struct stat fileInfo;
-    if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode)) analyseDirNR(args);
+    if(stat(args.filename, &fileInfo) == 0 && S_ISDIR(fileInfo.st_mode) && !args.r) analyseDirNR(args);
 
     else if (args.r) analyseDirR(argc, argv, envp);
     
