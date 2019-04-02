@@ -23,7 +23,7 @@ typedef struct
 void writeLog(double inst, int pid, char* act, arg args){
   FILE *logfile = fopen(args.logfilename, "a");
 
-  fprintf(logfile, "%0.2f - %d - %s\n", inst, pid, act);
+  fprintf(logfile, "%0.2f - %.8d - %s\n", inst, pid, act);
 
   fclose(logfile);
 
