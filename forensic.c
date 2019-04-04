@@ -23,10 +23,9 @@ typedef struct
 void writeLog(double inst, int pid, char* act, arg args){
   FILE *logfile = fopen(args.logfilename, "a");
 
-  fprintf(logfile, "%0.2f - %.8d - %s\n", inst, pid, act);
+  fprintf(logfile, "%0.2f - %08d - %s\n", inst, pid, act);
 
   fclose(logfile);
-
 }
 
 void logger(int i, arg args, char *cmd){
@@ -43,6 +42,11 @@ void logger(int i, arg args, char *cmd){
       break;
     case 1:
       strcpy(act, "COMMAND: ");
+      strcpy(final, act);
+      strcat(final, cmd);
+      break;
+    case 2:
+      strcpy(act, "SIGNAL: ");
       strcpy(final, act);
       strcat(final, cmd);
       break;
@@ -162,8 +166,8 @@ void getFileInfo(arg args){
         printf("%s\n", strerror(errno));
 
     else if (a == 0 && S_ISDIR(fileInfo.st_mode)){
-        fprintf(out, "%s is a directory;", args.filename);
-        //if(args.r) analyseDirR(argc)
+      fprintf(out, "%s is a directory;", args.filename);
+      //if(args.r) analyseDirR(argc)
 
     }
     else{
@@ -225,6 +229,18 @@ void getFileInfo(arg args){
     }
 
     if(args.o){
+      if (a == 0 && S_ISDIR(fileInfo.st_mode)){
+        kill(getpid(),SIGUSR1);
+        char act[25];
+        strcpy(act, "SIGUSR1");
+        if(args.v) logger(2,args,act);
+      }
+      else{
+        kill(getpid(),SIGUSR2);
+        char act[25];
+        strcpy(act, "SIGUSR2");
+        if(args.v) logger(2,args,act);
+      }
         printf("Data saved on file %s\n", args.outputfilename);
         fclose(out);
     }
@@ -328,7 +344,7 @@ void analyseDirNR(arg args){
             if (pid == 0){
                 strcat(args.filename, "/");
                 strcat(args.filename, direntity->d_name);
-                printf("%s\n", args.filename);
+                //printf("%s\n", args.filename);
                 getFileInfo(args);
                 options(args);
                 if(args.v) logger(0, args, NULL);
@@ -370,11 +386,47 @@ void analyseDirR(int argc, char *argv[], char *envp[]){
     closedir(dp);
 }
 
-/*void sig_usr(int signo)
+void int_handler(){
+  printf("Program terminated!\n");
+  waitpid(-1, NULL, 0);
+  exit(0);
+}
+
+void usr_handler(int signo)
 {
-  if (signo == SIGUSR1) printf("New directory: %d directories at this time.\n");
-  else if (signo == SIGUSR2) printf("New file: %d files at this time.\n");
-}*/
+  if (signo == SIGUSR1){
+    printf("New directory: %d directories at this time.\n", 0);
+  }
+  else if (signo == SIGUSR2){
+    printf("New file: %d files at this time.\n", 0);
+  }
+
+}
+
+void instalHandlers(){
+  struct sigaction usr1_act;
+  usr1_act.sa_handler = usr_handler;
+  usr1_act.sa_flags = 0;
+  sigemptyset(&(usr1_act.sa_mask));
+  sigaction(SIGUSR1, &usr1_act, NULL);
+
+  struct sigaction usr2_act;
+  usr2_act.sa_handler = usr_handler;
+  usr2_act.sa_flags = 0;
+  sigemptyset(&(usr2_act.sa_mask));
+  sigaction(SIGUSR2, &usr2_act, NULL);
+
+  struct sigaction int_act;
+  int_act.sa_handler = int_handler;
+  int_act.sa_flags = 0;
+  sigemptyset(&(int_act.sa_mask));
+  sigaddset(&(int_act.sa_mask), SIGINT);
+  sigaddset(&(int_act.sa_mask), SIGUSR1);
+  sigaddset(&(int_act.sa_mask), SIGUSR2);
+  sigaddset(&(int_act.sa_mask), SIGTSTP);
+  sigaddset(&(int_act.sa_mask), SIGCONT);
+  sigaction(SIGINT, &int_act, NULL);
+}
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -382,6 +434,7 @@ int main(int argc, char *argv[], char *envp[])
 
     args.start = clock();
 
+    instalHandlers();
     setenv("LOGFILENAME", "Logfile.txt", 1);
 
 
