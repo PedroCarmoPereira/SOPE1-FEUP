@@ -378,7 +378,6 @@ void analyseDirR(int argc, char *argv[], char *envp[]){
                 }
                 else execve(argv[0], argv, envp);
             }
-
             else wait(NULL);
         }
     }
@@ -396,11 +395,11 @@ void usr_handler(int signo)
 {
   if (signo == SIGUSR1){
     FILE *f;
-    char dirnum[32];
+    //char dirnum[32];
     int intdirnum;
-    f = fopen("dirnum.txt","w+");
-    fscanf(f, "%s", dirnum);
-    intdirnum = atoi(dirnum);
+    f = fopen("dirnum.txt","r+");
+    fscanf(f, "%d", &intdirnum);
+    //intdirnum = atoi(dirnum);
     intdirnum++;
     printf("New directory: %d directories at this time.\n", intdirnum);
     fprintf(f, "%d", intdirnum);
@@ -410,7 +409,7 @@ void usr_handler(int signo)
     FILE *f;
     char filenum[32];
     int intfilenum;
-    f = fopen("filenum.txt","w+");
+    f = fopen("filenum.txt","rw");
     fscanf(f, "%s", filenum);
     intfilenum = atoi(filenum);
     intfilenum++;
