@@ -395,10 +395,28 @@ void int_handler(){
 void usr_handler(int signo)
 {
   if (signo == SIGUSR1){
-    printf("New directory: %d directories at this time.\n", 0);
+    FILE *f;
+    char dirnum[32];
+    int intdirnum;
+    f = fopen("dirnum.txt","w+");
+    fscanf(f, "%s", dirnum);
+    intdirnum = atoi(dirnum);
+    intdirnum++;
+    printf("New directory: %d directories at this time.\n", intdirnum);
+    fprintf(f, "%d", intdirnum);
+    fclose(f);
   }
   else if (signo == SIGUSR2){
-    printf("New file: %d files at this time.\n", 0);
+    FILE *f;
+    char filenum[32];
+    int intfilenum;
+    f = fopen("filenum.txt","w+");
+    fscanf(f, "%s", filenum);
+    intfilenum = atoi(filenum);
+    intfilenum++;
+    printf("New file: %d files at this time.\n", intfilenum);
+    fprintf(f, "%d", intfilenum);
+    fclose(f);
   }
 
 }
